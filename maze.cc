@@ -1,17 +1,23 @@
 
+#include "maze.h"
+#include <stdlib.h>
 #include <chrono>
-#include <iostream>
-#include <random>
 
 int main()
 {
-    unsigned seed = std::chrono::steady_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed);
-    std::uniform_int_distribution<int> uid(1, 6);
+    const int height = 8;
+    const int width = 16;
+    const unsigned seed =
+        std::chrono::steady_clock::now().time_since_epoch().count();
 
-    int r = uid(generator);
+    Maze m {height, width, seed};
 
-    std::cout << r << std::endl;
+    int y = m.random_int(height);
+    int x = m.random_int(width);
+
+    m.randomized_Prims(y, x);
+
+    return EXIT_FAILURE;
 }
 
 
