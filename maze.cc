@@ -10,12 +10,13 @@ int main()
     const unsigned seed =
         std::chrono::steady_clock::now().time_since_epoch().count();
 
-    Maze m {height, width, seed};
+    MazeGenerator mg = MazeGenerator{seed};
 
-    int y = m.random_int(height);
-    int x = m.random_int(width);
+    int y = mg.random_int(height);
+    int x = mg.random_int(width);
+    Maze m = mg.randomized_Prims(height, width, y, x);
 
-    m.randomized_Prims(y, x);
+    m.print();
 
     return EXIT_FAILURE;
 }
