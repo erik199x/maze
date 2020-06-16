@@ -1,123 +1,91 @@
 
 #include "maze.h"
+#include <array>
 #include <iostream>
-#include <vector>
 
-int MazeGenerator::random_int(int n)
+bool Maze::is_connected(edge e)
 {
-    std::uniform_int_distribution<int> uid(0, n-1);
-    return uid(generator);
+    if (e >= 0 && e < connected.size())
+        return connected[e];
+    else
+        return false;
 }
 
-Maze MazeGenerator::randomized_Prims(int h, int w, int y, int x)
+bool Maze::connect(edge e)
 {
-    Maze m = Maze(h, w);
+    if (e >= 0 && e < connected.size()) {
+        connected[e] = true;
+        return false;
+    }
+    else
+        return true;
+}
 
-    int start = m.node(y, x);
-    if (start == -1)
-        return m;
+Maze::node Maze::get_node(int row, int column)
+{
+    return (row >= 0 && row < height && column >= 0 && column < width) ?
+        row * width + column : INVALID_NODE;
+}
 
-    std::vector<bool> visited = std::vector<bool>(h*w, false);
+std::pair<Maze::node, Maze::node> Maze::get_nodes(edge e) {
 
-    visited[start] = true;
-    std::vector<int> wall_list = m.edges(start);
+    node n = INVALID_NODE;
+    node adj = INVALID_NODE;
 
-    while (!wall_list.empty()) {
-
-        int r = random_int(wall_list.size());
-
-        int edge = wall_list[r];
-
-        int node = (edge < h*w - h) ? edge + edge / (w - 1) : edge + h - h*w;
-        int adj = (edge < h*w - h) ? node + 1 : node + w;
-
-        if (visited[node] != visited[adj]) {
-
-            int new_node = visited[node] ? adj : node;
-
-            visited[new_node] = true;
-            m.connect(edge);
-
-            for (int x : m.edges(new_node))
-                if (x != edge)
-                    wall_list.push_back(x);
-        }
-
-        wall_list.erase(wall_list.begin() + r);
+    if (e >= 0 && e < height * width + height) {
+        n = (e % (width + 1)) ? e - 1 - e / (width + 1) : INVALID_NODE;
+        adj = ((n+1) % width) ? n + 1 : INVALID_NODE;
+    }
+    else if (e >= height * width + height && e < connected.size()) {
+        n = (e < height * width + height + width) ? INVALID_NODE : e - height * width - height - width;
+        adj = (n < height * width - width) ? n + width : INVALID_NODE;
     }
 
-    return m;
+    return std::pair<node, node>{n, adj};
 }
 
-bool Maze::is_connected(int i)
+int Maze::west_edge(int node)
 {
-    if (i >= 0 && i < 2 * height * width - height - width)
-        return connected[i];
+    if (node >= 0 && node < height * width)
+        return node + node / width;
     else
-        return false;
+        return INVALID_EDGE;
 }
 
-bool Maze::connect(int i)
+int Maze::east_edge(node n)
 {
-    if (i >= 0 && i < 2 * height * width - height - width)
-        return (connected[i] = true);
+    if (n >= 0 && n < height * width)
+        return n + 1 + n / width;
     else
-        return false;
+        return INVALID_EDGE;
 }
 
-int Maze::node(int y, int x)
+int Maze::north_edge(node n)
 {
-    return (y >= 0 && y < height && x >= 0 && x < width) ? y * width + x : -1;
-}
-
-int Maze::west_edge(int i)
-{
-    if (i > 0 && i < height * width && i % width != 0)
-        return i - 1 - i / width;
+    if (n >= 0 && n < height * width)
+        return n + height * width + height;
     else
-        return -1;
+        return INVALID_EDGE;
 }
 
-int Maze::east_edge(int i)
+int Maze::south_edge(node n)
 {
-    return west_edge(i + 1);
-}
-
-int Maze::north_edge(int i)
-{
-    if (i >= width && i < height * width)
-        return i + height * width - height - width;
+    if (n >= 0 && n < height * width)
+        return n + height * width + height + width;
     else
-        return -1;
+        return INVALID_EDGE;
 }
 
-int Maze::south_edge(int i)
+std::array<Maze::edge, 4> Maze::get_edges(node n)
 {
-    return north_edge(i + width);
-}
+    std::array<edge, 4> edges;
 
-std::vector<int> Maze::edges(int i)
-{
-    std::vector<int> v;
+    edges[(int) direction::NORTH] = north_edge(n);
+    edges[(int) direction::EAST] = east_edge(n);
+    edges[(int) direction::SOUTH] = south_edge(n);
+    edges[(int) direction::WEST] = west_edge(n);
 
-    int edge;
-    edge = west_edge(i);
-    if (edge != -1)
-        v.push_back(edge);
-
-    edge = east_edge(i);
-    if (edge != -1)
-        v.push_back(edge);
-
-    edge = north_edge(i);
-    if (edge != -1)
-        v.push_back(edge);
-
-    edge = south_edge(i);
-    if (edge != -1)
-        v.push_back(edge);
-
-    return v;
+    return edges;
 }
 
 void Maze::print()
@@ -127,9 +95,9 @@ void Maze::print()
         std::cout << '+';
         for (int col = 0 ; col < width ; col++) {
 
-            int i = node(row, col);
+            node n = get_node(row, col);
 
-            if (is_connected(north_edge(i)))
+            if (is_connected(north_edge(n)))
                 std::cout << "   +";
             else
                 std::cout <<  "---+";
@@ -139,9 +107,9 @@ void Maze::print()
         std::cout << '|';
         for (int col = 0 ; col < width ; col++) {
 
-            int i = node(row, col);
+            node n = get_node(row, col);
 
-            if (is_connected(east_edge(i)))
+            if (is_connected(east_edge(n)))
                 std::cout << "    ";
             else
                 std::cout <<  "   |";
@@ -150,11 +118,60 @@ void Maze::print()
     }
 
     std::cout << '+';
-    for (int i = 0 ; i < width ; i++)
+    for (int col = 0 ; col < width ; col++)
         std::cout << "---+";
     std::cout << std::endl;
 }
 
+int MazeGenerator::random_int(int n)
+{
+    std::uniform_int_distribution<int> uid(0, n-1);
+    return uid(generator);
+}
 
+Maze MazeGenerator::randomized_Prims(int h, int w, int row, int column)
+{
+    Maze m = Maze(h, w);
 
+    Maze::node start = m.get_node(row, column);
+    if (start == Maze::INVALID_NODE)
+        return m;
 
+    std::vector<bool> visited = std::vector<bool>(h*w, false);
+
+    visited[start] = true;
+    std::array<Maze::edge, 4> edges = m.get_edges(start);
+    std::vector<Maze::edge> wall_list = std::vector<Maze::edge>(
+        edges.begin(), edges.end()
+    );
+
+    while (!wall_list.empty()) {
+
+        int r = random_int(wall_list.size());
+
+        Maze::edge e = wall_list[r];
+
+        std::pair<Maze::node, Maze::node> np = m.get_nodes(e);
+
+        Maze::node n = np.first;
+        Maze::node adj = np.second;
+
+        if (n != Maze::INVALID_NODE &&
+            adj != Maze::INVALID_NODE &&
+            visited[n] != visited[adj]) {
+
+            Maze::node new_node = visited[n] ? adj : n;
+
+            visited[new_node] = true;
+            m.connect(e);
+
+            for (Maze::node x : m.get_edges(new_node))
+                if (x != e)
+                    wall_list.push_back(x);
+        }
+
+        wall_list.erase(wall_list.begin() + r);
+    }
+
+    return m;
+}

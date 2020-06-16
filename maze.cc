@@ -12,9 +12,9 @@ int main()
 
     MazeGenerator mg = MazeGenerator{seed};
 
-    int y = mg.random_int(height);
-    int x = mg.random_int(width);
-    Maze m = mg.randomized_Prims(height, width, y, x);
+    int row = mg.random_int(height);
+    int column = mg.random_int(width);
+    Maze m = mg.randomized_Prims(height, width, row, column);
 
     m.print();
 
