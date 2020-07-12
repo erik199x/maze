@@ -2,6 +2,7 @@
 #ifndef MAZE_H
 #define MAZE_H
 
+#include "disjoint_set.cc"
 #include <array>
 #include <random>
 #include <utility>
@@ -54,7 +55,8 @@ class MazeGenerator
 
     public:
         MazeGenerator(unsigned seed) : generator(seed) {}
-        Maze randomized_Prims(int h, int w, int row, int column);
+        Maze Prim(int h, int w, int row, int column);
+        Maze Kruskal(int h, int w);
         int random_int(int n);
 };
 

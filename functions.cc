@@ -1,24 +1,17 @@
 
 #include "maze.h"
+#include <algorithm>
 #include <array>
 #include <iostream>
 
 bool Maze::is_connected(edge e)
 {
-    if (e >= 0 && e < connected.size())
-        return connected[e];
-    else
-        return false;
+    return (e >= 0 && e < connected.size()) ? connected[e] : false;
 }
 
 bool Maze::connect(edge e)
 {
-    if (e >= 0 && e < connected.size()) {
-        connected[e] = true;
-        return false;
-    }
-    else
-        return true;
+    return (e >= 0 && e < connected.size()) ? !(connected[e] = true) : true;
 }
 
 Maze::node Maze::get_node(int row, int column)
@@ -44,36 +37,26 @@ std::pair<Maze::node, Maze::node> Maze::get_nodes(edge e) {
     return std::pair<node, node>{n, adj};
 }
 
-int Maze::west_edge(int node)
+int Maze::west_edge(node n)
 {
-    if (node >= 0 && node < height * width)
-        return node + node / width;
-    else
-        return INVALID_EDGE;
+    return (n >= 0 && n < height * width) ? n + n / width : INVALID_EDGE;
 }
 
 int Maze::east_edge(node n)
 {
-    if (n >= 0 && n < height * width)
-        return n + 1 + n / width;
-    else
-        return INVALID_EDGE;
+    return (n >= 0 && n < height * width) ? n + 1 + n / width : INVALID_EDGE;
 }
 
 int Maze::north_edge(node n)
 {
-    if (n >= 0 && n < height * width)
-        return n + height * width + height;
-    else
-        return INVALID_EDGE;
+    return (n >= 0 && n < height * width) ?
+        n + height * width + height : INVALID_EDGE;
 }
 
 int Maze::south_edge(node n)
 {
-    if (n >= 0 && n < height * width)
-        return n + height * width + height + width;
-    else
-        return INVALID_EDGE;
+    return (n >= 0 && n < height * width) ?
+        n + height * width + height + width : INVALID_EDGE;
 }
 
 std::array<Maze::edge, 4> Maze::get_edges(node n)
@@ -129,7 +112,7 @@ int MazeGenerator::random_int(int n)
     return uid(generator);
 }
 
-Maze MazeGenerator::randomized_Prims(int h, int w, int row, int column)
+Maze MazeGenerator::Prim(int h, int w, int row, int column)
 {
     Maze m = Maze(h, w);
 
@@ -165,7 +148,7 @@ Maze MazeGenerator::randomized_Prims(int h, int w, int row, int column)
             visited[new_node] = true;
             m.connect(e);
 
-            for (Maze::node x : m.get_edges(new_node))
+            for (Maze::edge x : m.get_edges(new_node))
                 if (x != e)
                     wall_list.push_back(x);
         }
@@ -175,3 +158,46 @@ Maze MazeGenerator::randomized_Prims(int h, int w, int row, int column)
 
     return m;
 }
+
+Maze MazeGenerator::Kruskal(int h, int w) {
+
+    Maze m = Maze(h, w);
+
+    std::vector<Maze::edge> wall_list (2*h*w + h + w);
+
+    for (int i = 0 ; i < wall_list.size() ; i++)
+        wall_list[i] = i;
+
+    std::shuffle(wall_list.begin(), wall_list.end(), generator);
+
+    DisjointSet forest = DisjointSet{h*w};
+
+    for (Maze::edge e : wall_list) {
+
+        std::pair<Maze::node, Maze::node> np = m.get_nodes(e);
+
+        Maze::node x = np.first;
+        Maze::node y = np.second;
+
+        if (x == Maze::INVALID_NODE || y == Maze::INVALID_NODE)
+            continue;
+
+        int x_root = forest.find(x);
+        int y_root = forest.find(y);
+
+        if (x_root != y_root) {
+            m.connect(e);
+            forest.merge(x_root, y_root);
+        }
+    }
+
+    return m;
+}
+
+
+
+
+
+
+
+
